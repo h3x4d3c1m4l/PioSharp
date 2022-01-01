@@ -1,186 +1,186 @@
 ﻿namespace PioSharp
 {
-	// TODO IRQ and SideSet
-	public readonly record struct PioInstruction
-	{
-		public PioInstructionTypes Type { get; init; }
+    // TODO IRQ and SideSet
+    public readonly record struct PioInstruction
+    {
+        public PioInstructionTypes Type { get; init; }
 
-		public byte BitCount { get; init; }
+        public byte BitCount { get; init; }
 
-		public bool Block { get; init; }
+        public bool Block { get; init; }
 
-		#region JMP
+        #region JMP
 
-		public static PioInstruction CreateJmp(PioJumpConditions condition, byte address)
-		{
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.JMP,
-				JumpConditions = condition,
-				JumpAddress = address
-			};
-		}
+        public static PioInstruction CreateJmp(PioJumpConditions condition, byte address)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.JMP,
+                JumpConditions = condition,
+                JumpAddress = address
+            };
+        }
 
-		public PioJumpConditions JumpConditions { get; init; }
+        public PioJumpConditions JumpConditions { get; init; }
 
-		public byte JumpAddress { get; init; }
+        public byte JumpAddress { get; init; }
 
-		#endregion
+        #endregion
 
-		#region WAIT
+        #region WAIT
 
-		public static PioInstruction CreateWait(PioWaitPolarities polarity, PioWaitSources source, byte index)
-		{
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.WAIT,
-				WaitPolarity = polarity,
-				WaitSource = source,
-				WaitIndex = index
-			};
-		}
+        public static PioInstruction CreateWait(PioWaitPolarities polarity, PioWaitSources source, byte index)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.WAIT,
+                WaitPolarity = polarity,
+                WaitSource = source,
+                WaitIndex = index
+            };
+        }
 
-		public PioWaitPolarities WaitPolarity { get; init; }
+        public PioWaitPolarities WaitPolarity { get; init; }
 
-		public PioWaitSources WaitSource { get; init; }
+        public PioWaitSources WaitSource { get; init; }
 
-		public byte WaitIndex { get; init; }
+        public byte WaitIndex { get; init; }
 
-		#endregion
+        #endregion
 
-		#region IN
+        #region IN
 
-		public static PioInstruction CreateIn(PioInSources source, byte bitCount)
-		{
-			if (bitCount > 32)
-			{
-				throw new ArgumentException("Bit count > 32 unsupported by PIO", nameof(bitCount));
-			}
-			else if (bitCount == 32)
-			{
-				// this is just encoding stuff, see manual
-				bitCount = 0;
-			}
+        public static PioInstruction CreateIn(PioInSources source, byte bitCount)
+        {
+            if (bitCount > 32)
+            {
+                throw new ArgumentException("Bit count > 32 unsupported by PIO", nameof(bitCount));
+            }
+            else if (bitCount == 32)
+            {
+                // this is just encoding stuff, see manual
+                bitCount = 0;
+            }
 
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.IN,
-				InSource = source,
-				BitCount = bitCount
-			};
-		}
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.IN,
+                InSource = source,
+                BitCount = bitCount
+            };
+        }
 
-		public PioInSources InSource { get; init; }
+        public PioInSources InSource { get; init; }
 
-		#endregion
+        #endregion
 
-		#region OUT
+        #region OUT
 
-		public static PioInstruction CreateOut(PioOutDestinations destination, byte bitCount)
-		{
-			if (bitCount > 32)
-			{
-				throw new ArgumentException("Bit count > 32 unsupported by PIO", nameof(bitCount));
-			}
-			else if (bitCount == 32)
-			{
-				// this is just encoding stuff, see manual
-				bitCount = 0;
-			}
+        public static PioInstruction CreateOut(PioOutDestinations destination, byte bitCount)
+        {
+            if (bitCount > 32)
+            {
+                throw new ArgumentException("Bit count > 32 unsupported by PIO", nameof(bitCount));
+            }
+            else if (bitCount == 32)
+            {
+                // this is just encoding stuff, see manual
+                bitCount = 0;
+            }
 
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.OUT,
-				OutDestination = destination,
-				BitCount = bitCount
-			};
-		}
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.OUT,
+                OutDestination = destination,
+                BitCount = bitCount
+            };
+        }
 
-		public PioOutDestinations OutDestination { get; init; }
+        public PioOutDestinations OutDestination { get; init; }
 
-		#endregion
+        #endregion
 
-		#region PUSH
+        #region PUSH
 
-		public static PioInstruction CreatePush(bool ifFull, bool block)
-		{
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.PUSH,
-				PushIfFull = ifFull,
-				Block = block
-			};
-		}
+        public static PioInstruction CreatePush(bool ifFull, bool block)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.PUSH,
+                PushIfFull = ifFull,
+                Block = block
+            };
+        }
 
-		public bool PushIfFull { get; init; }
+        public bool PushIfFull { get; init; }
 
-		#endregion
+        #endregion
 
-		#region PULL
+        #region PULL
 
-		public static PioInstruction CreatePull(bool ifEmpty, bool block)
-		{
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.PULL,
-				PullIfEmpty = ifEmpty,
-				Block = block
-			};
-		}
+        public static PioInstruction CreatePull(bool ifEmpty, bool block)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.PULL,
+                PullIfEmpty = ifEmpty,
+                Block = block
+            };
+        }
 
-		public bool PullIfEmpty { get; init; }
+        public bool PullIfEmpty { get; init; }
 
-		#endregion
+        #endregion
 
-		#region MOV
+        #region MOV
 
-		public static PioInstruction CreateMov(PioMovDestinations destination, PioMovOperations operation, PioMovSources sources)
-		{
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.MOV,
-				MovDestination = destination,
-				MovOperation = operation,
-				MovSource = sources
-			};
-		}
+        public static PioInstruction CreateMov(PioMovDestinations destination, PioMovOperations operation, PioMovSources sources)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.MOV,
+                MovDestination = destination,
+                MovOperation = operation,
+                MovSource = sources
+            };
+        }
 
-		public PioMovDestinations MovDestination { get; init; }
+        public PioMovDestinations MovDestination { get; init; }
 
-		public PioMovOperations MovOperation { get; init; }
+        public PioMovOperations MovOperation { get; init; }
 
-		public PioMovSources MovSource { get; init; }
+        public PioMovSources MovSource { get; init; }
 
-		#endregion
+        #endregion
 
-		#region IRQ
+        #region IRQ
 
-		// TODO
+        // TODO
 
-		#endregion
+        #endregion
 
-		#region SET
+        #region SET
 
-		public static PioInstruction CreateSet(PioSetDestinations destination, byte data)
-		{
-			return new PioInstruction
-			{
-				Type = PioInstructionTypes.SET,
-				SetDestination = destination,
-				SetData = data
-			};
-		}
+        public static PioInstruction CreateSet(PioSetDestinations destination, byte data)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.SET,
+                SetDestination = destination,
+                SetData = data
+            };
+        }
 
-		public PioSetDestinations SetDestination { get; init; }
+        public PioSetDestinations SetDestination { get; init; }
 
-		public byte SetData { get; init; }
+        public byte SetData { get; init; }
 
-		#endregion
+        #endregion
 
-		#region Encoding
+        #region Encoding
 
-		public ushort EncodeToUShort()
-		{
+        public ushort EncodeToUShort()
+        {
             return Type switch
             {
                 PioInstructionTypes.JMP => (ushort)((ushort)Type | (ushort)JumpConditions | JumpAddress),
@@ -196,34 +196,34 @@
             };
         }
 
-		public byte[] Encode()
-		{
-			var data = new byte[2];
-			Encode(data);
-			return data;
-		}
+        public byte[] Encode()
+        {
+            var data = new byte[2];
+            Encode(data);
+            return data;
+        }
 
-		public void Encode(Span<byte> byteSpan)
-		{
-			var ins = EncodeToUShort();
-			if (!BitConverter.TryWriteBytes(byteSpan, ins))
-			{
-				throw new Exception("Conversion of ushort to bytes failed");
-			}
-		}
+        public void Encode(Span<byte> byteSpan)
+        {
+            var ins = EncodeToUShort();
+            if (!BitConverter.TryWriteBytes(byteSpan, ins))
+            {
+                throw new Exception("Conversion of ushort to bytes failed");
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Decoding
+        #region Decoding
 
-		public static PioInstruction DecodeFromUShort(ushort data)
-		{
-			// instruction type
-			var insType = (PioInstructionTypes)(data & (1 << 13 | 1 << 14 | 1 << 15));
-			if (insType == PioInstructionTypes.PUSH && (data & (1 << 7)) == (1 << 7))
-			{
-				insType = PioInstructionTypes.PULL;
-			}
+        public static PioInstruction DecodeFromUShort(ushort data)
+        {
+            // instruction type
+            var insType = (PioInstructionTypes)(data & (1 << 13 | 1 << 14 | 1 << 15));
+            if (insType == PioInstructionTypes.PUSH && (data & (1 << 7)) == (1 << 7))
+            {
+                insType = PioInstructionTypes.PULL;
+            }
 
             return insType switch
             {
@@ -282,11 +282,11 @@
             };
         }
 
-		public static PioInstruction Decode(ReadOnlySpan<byte> instructionData)
-		{
-			return DecodeFromUShort(BitConverter.ToUInt16(instructionData));
-		}
+        public static PioInstruction Decode(ReadOnlySpan<byte> instructionData)
+        {
+            return DecodeFromUShort(BitConverter.ToUInt16(instructionData));
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

@@ -3,9 +3,9 @@
 namespace PioSharp
 {
     public static class PioasmStringExtensions
-	{
-		public static string ToPioasmString(this PioInstruction instruction, OneOf<string, Func<int, string>>? destinationResolver = null)
-		{
+    {
+        public static string ToPioasmString(this PioInstruction instruction, OneOf<string, Func<int, string>>? destinationResolver = null)
+        {
             return instruction.Type switch
             {
                 PioInstructionTypes.JMP => $"jmp {(instruction.JumpConditions != PioJumpConditions.Always ? $"{instruction.JumpConditions.ToPioasmString()} " : "")}{ResolveJumpDestination(instruction.JumpAddress, destinationResolver)}",
@@ -37,8 +37,8 @@ namespace PioSharp
             }
         }
 
-		public static string ToPioasmString(this PioJumpConditions x)
-		{
+        public static string ToPioasmString(this PioJumpConditions x)
+        {
             return x switch
             {
                 PioJumpConditions.Always => "",
@@ -53,8 +53,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioWaitSources x)
-		{
+        public static string ToPioasmString(this PioWaitSources x)
+        {
             return x switch
             {
                 PioWaitSources.Gpio => "GPIO",
@@ -64,8 +64,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioWaitPolarities x)
-		{
+        public static string ToPioasmString(this PioWaitPolarities x)
+        {
             return x switch
             {
                 PioWaitPolarities.WaitForZero => "0",
@@ -74,8 +74,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioInSources x)
-		{
+        public static string ToPioasmString(this PioInSources x)
+        {
             return x switch
             {
                 PioInSources.Pins => "PINS",
@@ -88,8 +88,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioOutDestinations x)
-		{
+        public static string ToPioasmString(this PioOutDestinations x)
+        {
             return x switch
             {
                 PioOutDestinations.Pins => "PINS",
@@ -104,8 +104,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioMovDestinations x)
-		{
+        public static string ToPioasmString(this PioMovDestinations x)
+        {
             return x switch
             {
                 PioMovDestinations.Pins => "PINS",
@@ -119,8 +119,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioMovOperations x)
-		{
+        public static string ToPioasmString(this PioMovOperations x)
+        {
             return x switch
             {
                 PioMovOperations.BitReverse => "::",
@@ -130,8 +130,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioMovSources x)
-		{
+        public static string ToPioasmString(this PioMovSources x)
+        {
             return x switch
             {
                 PioMovSources.Pins => "PINS",
@@ -145,8 +145,8 @@ namespace PioSharp
             };
         }
 
-		public static string ToPioasmString(this PioSetDestinations x)
-		{
+        public static string ToPioasmString(this PioSetDestinations x)
+        {
             return x switch
             {
                 PioSetDestinations.Pins => "PINS",
@@ -156,5 +156,5 @@ namespace PioSharp
                 _ => throw new Exception($"Value {x} not supported"),
             };
         }
-	}
+    }
 }
