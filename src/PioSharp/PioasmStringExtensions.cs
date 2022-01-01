@@ -9,14 +9,14 @@ namespace PioSharp
             return instruction.Type switch
             {
                 PioInstructionTypes.JMP => $"jmp {(instruction.JumpConditions != PioJumpConditions.Always ? $"{instruction.JumpConditions.ToPioasmString()} " : "")}{ResolveJumpDestination(instruction.JumpAddress, destinationResolver)}",
-                PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}",//TODO: IRQ no rel
-                PioInstructionTypes.IN => $"in {instruction.InSource.ToPioasmString()}, {instruction.BitCount}",
-                PioInstructionTypes.OUT => $"out {instruction.OutDestination.ToPioasmString()}, {instruction.BitCount}",
+                PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}{(instruction.WaitSource == PioWaitSources.Irq ? $" {ResolveIrqNumberAndRel(instruction.WaitIndex)}" : "")}", // TODO: test properly
+                PioInstructionTypes.IN => $"in {instruction.InSource.ToPioasmString()}, {(instruction.BitCount == 0 ? "32" : instruction.BitCount.ToString())}",
+                PioInstructionTypes.OUT => $"out {instruction.OutDestination.ToPioasmString()}, {(instruction.BitCount == 0 ? "32" : instruction.BitCount.ToString())}",
                 PioInstructionTypes.PUSH => $"push {(instruction.PushIfFull ? "iffull " : "")}{(instruction.Block ? "block" : "noblock")}",
                 PioInstructionTypes.PULL => $"pull {(instruction.PullIfEmpty ? "ifempty " : "")}{(instruction.Block ? "block" : "noblock")}",
                 PioInstructionTypes.MOV => $"mov {instruction.MovDestination.ToPioasmString()}, {(instruction.MovOperation != PioMovOperations.None ? $"{instruction.MovOperation.ToPioasmString()} " : "")}{instruction.MovSource.ToPioasmString()}",
-                PioInstructionTypes.IRQ => throw new Exception("IRQ instruction not supported yet"),// TODO
-                PioInstructionTypes.SET => $"set {instruction.SetDestination}, {instruction.SetData}",
+                PioInstructionTypes.IRQ => $"irq (not supported yet!)", // TODO
+                PioInstructionTypes.SET => $"set {instruction.SetDestination.ToPioasmString()}, {instruction.SetData}",
                 _ => throw new Exception($"Instruction {instruction.Type} not supported yet"),
             };
         }
@@ -34,6 +34,18 @@ namespace PioSharp
             else
             {
                 return destinationResolver.Value.AsT1(destination);
+            }
+        }
+
+        private static string ResolveIrqNumberAndRel(byte index)
+        {
+            if ((index >> 4) == 1)
+            {
+                return $"{index} rel";
+            }
+            else
+            {
+                return index.ToString();
             }
         }
 
@@ -58,8 +70,8 @@ namespace PioSharp
             return x switch
             {
                 PioWaitSources.Gpio => "GPIO",
-                PioWaitSources.Irq => "PIN",
-                PioWaitSources.Pin => "IRQ",
+                PioWaitSources.Pin => "PIN",
+                PioWaitSources.Irq => "IRQ",
                 _ => throw new Exception($"Value {x} not supported"),
             };
         }

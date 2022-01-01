@@ -56,17 +56,12 @@
             {
                 throw new ArgumentException("Bit count > 32 unsupported by PIO", nameof(bitCount));
             }
-            else if (bitCount == 32)
-            {
-                // this is just encoding stuff, see manual
-                bitCount = 0;
-            }
 
             return new PioInstruction
             {
                 Type = PioInstructionTypes.IN,
                 InSource = source,
-                BitCount = bitCount
+                BitCount = bitCount == 0 ? (byte)32 : bitCount
             };
         }
 
@@ -82,17 +77,12 @@
             {
                 throw new ArgumentException("Bit count > 32 unsupported by PIO", nameof(bitCount));
             }
-            else if (bitCount == 32)
-            {
-                // this is just encoding stuff, see manual
-                bitCount = 0;
-            }
 
             return new PioInstruction
             {
                 Type = PioInstructionTypes.OUT,
                 OutDestination = destination,
-                BitCount = bitCount
+                BitCount = bitCount == 0 ? (byte)32 : bitCount
             };
         }
 
@@ -134,14 +124,14 @@
 
         #region MOV
 
-        public static PioInstruction CreateMov(PioMovDestinations destination, PioMovOperations operation, PioMovSources sources)
+        public static PioInstruction CreateMov(PioMovDestinations destination, PioMovOperations operation, PioMovSources source)
         {
             return new PioInstruction
             {
                 Type = PioInstructionTypes.MOV,
                 MovDestination = destination,
                 MovOperation = operation,
-                MovSource = sources
+                MovSource = source
             };
         }
 
@@ -185,8 +175,8 @@
             {
                 PioInstructionTypes.JMP => (ushort)((ushort)Type | (ushort)JumpConditions | JumpAddress),
                 PioInstructionTypes.WAIT => (ushort)((ushort)Type | (ushort)WaitPolarity | (ushort)WaitSource | WaitIndex),
-                PioInstructionTypes.IN => (ushort)((ushort)Type | (ushort)InSource | BitCount),
-                PioInstructionTypes.OUT => (ushort)((ushort)Type | (ushort)OutDestination | BitCount),
+                PioInstructionTypes.IN => (ushort)((ushort)Type | (ushort)InSource | (BitCount == 32 ? 0 : BitCount)),
+                PioInstructionTypes.OUT => (ushort)((ushort)Type | (ushort)OutDestination | (BitCount == 32 ? 0 : BitCount)),
                 PioInstructionTypes.PUSH => (ushort)((ushort)Type | (ushort)(PushIfFull ? 1 << 6 : 0) | (ushort)(Block ? 1 << 5 : 0)),
                 PioInstructionTypes.PULL => (ushort)((ushort)Type | (ushort)(PullIfEmpty ? 1 << 6 : 0) | (ushort)(Block ? 1 << 5 : 0)),
                 PioInstructionTypes.MOV => (ushort)((ushort)Type | (ushort)MovDestination | (ushort)MovOperation | (ushort)MovSource),
@@ -227,57 +217,41 @@
 
             return insType switch
             {
-                PioInstructionTypes.JMP => new PioInstruction
-                {
-                    Type = PioInstructionTypes.JMP,
-                    JumpConditions = (PioJumpConditions)(data & (1 << 5 | 1 << 6 | 1 << 7)),
-                    JumpAddress = (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
-                },
-                PioInstructionTypes.WAIT => new PioInstruction
-                {
-                    Type = PioInstructionTypes.WAIT,
-                    WaitPolarity = (data & (1 << 7)) == (1 << 7) ? PioWaitPolarities.WaitForOne : PioWaitPolarities.WaitForZero,
-                    WaitSource = (PioWaitSources)(data & (1 << 5 | 1 << 6)),
-                    WaitIndex = (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
-                },
-                PioInstructionTypes.IN => new PioInstruction
-                {
-                    Type = PioInstructionTypes.IN,
-                    InSource = (PioInSources)(data & (1 << 5 | 1 << 6 | 1 << 7)),
-                    BitCount = (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
-                },
-                PioInstructionTypes.OUT => new PioInstruction
-                {
-                    Type = PioInstructionTypes.OUT,
-                    OutDestination = (PioOutDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
-                    BitCount = (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
-                },
-                PioInstructionTypes.PUSH => new PioInstruction
-                {
-                    Type = PioInstructionTypes.PUSH,
-                    PushIfFull = (data & (1 << 6)) == (1 << 6),
-                    Block = (data & (1 << 5)) == (1 << 5),
-                },
-                PioInstructionTypes.PULL => new PioInstruction
-                {
-                    Type = PioInstructionTypes.PULL,
-                    PullIfEmpty = (data & (1 << 6)) == (1 << 6),
-                    Block = (data & (1 << 5)) == (1 << 5),
-                },
-                PioInstructionTypes.MOV => new PioInstruction
-                {
-                    Type = PioInstructionTypes.MOV,
-                    MovDestination = (PioMovDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
-                    MovOperation = (PioMovOperations)(data & (1 << 3 | 1 << 4)),
-                    MovSource = (PioMovSources)(data & (1 << 0 | 1 << 1 | 1 << 2)),
-                },
+                PioInstructionTypes.JMP => CreateJmp(
+                    condition: (PioJumpConditions)(data & (1 << 5 | 1 << 6 | 1 << 7)),
+                    address: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
+                ),
+                PioInstructionTypes.WAIT => CreateWait(
+                    polarity: (data & (1 << 7)) == (1 << 7) ? PioWaitPolarities.WaitForOne : PioWaitPolarities.WaitForZero,
+                    source: (PioWaitSources)(data & (1 << 5 | 1 << 6)),
+                    index: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
+                ),
+                PioInstructionTypes.IN => CreateIn(
+                    source: (PioInSources)(data & (1 << 5 | 1 << 6 | 1 << 7)),
+                    bitCount: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
+                ),
+                PioInstructionTypes.OUT => CreateOut(
+                    destination: (PioOutDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
+                    bitCount: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
+                ),
+                PioInstructionTypes.PUSH => CreatePush(
+                    ifFull: (data & (1 << 6)) == (1 << 6),
+                    block: (data & (1 << 5)) == (1 << 5)
+                ),
+                PioInstructionTypes.PULL => CreatePull(
+                    ifEmpty: (data & (1 << 6)) == (1 << 6),
+                    block: (data & (1 << 5)) == (1 << 5)
+                ),
+                PioInstructionTypes.MOV => CreateMov(
+                    destination: (PioMovDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
+                    operation: (PioMovOperations)(data & (1 << 3 | 1 << 4)),
+                    source: (PioMovSources)(data & (1 << 0 | 1 << 1 | 1 << 2))
+                ),
                 PioInstructionTypes.IRQ => throw new Exception("IRQ instruction not supported yet"),// TODO
-                PioInstructionTypes.SET => new PioInstruction
-                {
-                    Type = PioInstructionTypes.SET,
-                    SetDestination = (PioSetDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
-                    SetData = (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
-                },
+                PioInstructionTypes.SET => CreateSet(
+                    destination: (PioSetDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
+                    data: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
+                ),
                 _ => throw new Exception($"Instruction {insType} not supported"),
             };
         }

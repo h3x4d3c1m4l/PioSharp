@@ -92,8 +92,8 @@
     public enum PioSetDestinations
     {
         Pins = 0,
-        X = 1 << 0,
-        Y = 1 << 1,
+        X = 1 << 5,
+        Y = 1 << 6,
         PinDirs = 1 << 7
     }
 }
