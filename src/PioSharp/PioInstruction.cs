@@ -184,7 +184,7 @@
             return Type switch
             {
                 PioInstructionTypes.JMP => (ushort)((ushort)Type | (ushort)JumpConditions | JumpAddress),
-                PioInstructionTypes.WAIT => (ushort)((ushort)Type | (ushort)WaitPolarity | (ushort)WaitSource | (ushort)WaitIndex),
+                PioInstructionTypes.WAIT => (ushort)((ushort)Type | (ushort)WaitPolarity | (ushort)WaitSource | WaitIndex),
                 PioInstructionTypes.IN => (ushort)((ushort)Type | (ushort)InSource | BitCount),
                 PioInstructionTypes.OUT => (ushort)((ushort)Type | (ushort)OutDestination | BitCount),
                 PioInstructionTypes.PUSH => (ushort)((ushort)Type | (ushort)(PushIfFull ? 1 << 6 : 0) | (ushort)(Block ? 1 << 5 : 0)),

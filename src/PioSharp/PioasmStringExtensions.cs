@@ -1,12 +1,14 @@
-﻿namespace PioSharp
+﻿using OneOf;
+
+namespace PioSharp
 {
     public static class PioasmStringExtensions
 	{
-		public static string ToPioasmString(this PioInstruction instruction, string jmpDestinationName)
+		public static string ToPioasmString(this PioInstruction instruction, OneOf<string, Func<int, string>>? destinationResolver = null)
 		{
             return instruction.Type switch
             {
-                PioInstructionTypes.JMP => $"jmp {(instruction.JumpConditions != PioJumpConditions.Always ? $"{instruction.JumpConditions.ToPioasmString()} " : "")}{jmpDestinationName}",
+                PioInstructionTypes.JMP => $"jmp {(instruction.JumpConditions != PioJumpConditions.Always ? $"{instruction.JumpConditions.ToPioasmString()} " : "")}{ResolveJumpDestination(instruction.JumpAddress, destinationResolver)}",
                 PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}",//TODO: IRQ no rel
                 PioInstructionTypes.IN => $"in {instruction.InSource.ToPioasmString()}, {instruction.BitCount}",
                 PioInstructionTypes.OUT => $"out {instruction.OutDestination.ToPioasmString()}, {instruction.BitCount}",
@@ -17,6 +19,22 @@
                 PioInstructionTypes.SET => $"set {instruction.SetDestination}, {instruction.SetData}",
                 _ => throw new Exception($"Instruction {instruction.Type} not supported yet"),
             };
+        }
+
+        private static string ResolveJumpDestination(byte destination, OneOf<string, Func<int, string>>? destinationResolver)
+        {
+            if (destinationResolver == null)
+            {
+                return destination.ToString();
+            }
+            else if (destinationResolver.Value.IsT0)
+            {
+                return destinationResolver.Value.AsT0;
+            }
+            else
+            {
+                return destinationResolver.Value.AsT1(destination);
+            }
         }
 
 		public static string ToPioasmString(this PioJumpConditions x)
