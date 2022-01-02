@@ -1,6 +1,6 @@
 ﻿namespace PioSharp
 {
-    // TODO IRQ and SideSet
+    // TODO: Side Set
     public readonly record struct PioInstruction
     {
         public PioInstructionTypes Type { get; init; }
@@ -8,6 +8,8 @@
         public byte BitCount { get; init; }
 
         public bool Block { get; init; }
+
+        public byte Index { get; init; }
 
         #region JMP
 
@@ -36,15 +38,13 @@
                 Type = PioInstructionTypes.WAIT,
                 WaitPolarity = polarity,
                 WaitSource = source,
-                WaitIndex = index
+                Index = index
             };
         }
 
         public PioWaitPolarities WaitPolarity { get; init; }
 
         public PioWaitSources WaitSource { get; init; }
-
-        public byte WaitIndex { get; init; }
 
         #endregion
 
@@ -145,7 +145,20 @@
 
         #region IRQ
 
-        // TODO
+        public static PioInstruction CreateIrq(bool clear, bool wait, byte index)
+        {
+            return new PioInstruction
+            {
+                Type = PioInstructionTypes.IRQ,
+                IrqClear = clear,
+                IrqWait = wait,
+                Index = index
+            };
+        }
+
+        public bool IrqClear { get; init; }
+
+        public bool IrqWait { get; init; }
 
         #endregion
 
@@ -174,13 +187,13 @@
             return Type switch
             {
                 PioInstructionTypes.JMP => (ushort)((ushort)Type | (ushort)JumpConditions | JumpAddress),
-                PioInstructionTypes.WAIT => (ushort)((ushort)Type | (ushort)WaitPolarity | (ushort)WaitSource | WaitIndex),
+                PioInstructionTypes.WAIT => (ushort)((ushort)Type | (ushort)WaitPolarity | (ushort)WaitSource | Index),
                 PioInstructionTypes.IN => (ushort)((ushort)Type | (ushort)InSource | (BitCount == 32 ? 0 : BitCount)),
                 PioInstructionTypes.OUT => (ushort)((ushort)Type | (ushort)OutDestination | (BitCount == 32 ? 0 : BitCount)),
                 PioInstructionTypes.PUSH => (ushort)((ushort)Type | (ushort)(PushIfFull ? 1 << 6 : 0) | (ushort)(Block ? 1 << 5 : 0)),
                 PioInstructionTypes.PULL => (ushort)((ushort)Type | (ushort)(PullIfEmpty ? 1 << 6 : 0) | (ushort)(Block ? 1 << 5 : 0)),
                 PioInstructionTypes.MOV => (ushort)((ushort)Type | (ushort)MovDestination | (ushort)MovOperation | (ushort)MovSource),
-                PioInstructionTypes.IRQ => throw new Exception("IRQ instruction not supported yet"),// TODO
+                PioInstructionTypes.IRQ => (ushort)((ushort)Type | (ushort)(IrqClear ? 1 << 6 : 0) | (ushort)(IrqWait ? 1 << 5 : 0) | Index),
                 PioInstructionTypes.SET => (ushort)((ushort)Type | (ushort)SetDestination | SetData),
                 _ => throw new Exception($"Instruction type {Type} not supported"),
             };
@@ -235,19 +248,23 @@
                     bitCount: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
                 ),
                 PioInstructionTypes.PUSH => CreatePush(
-                    ifFull: (data & (1 << 6)) == (1 << 6),
-                    block: (data & (1 << 5)) == (1 << 5)
+                    ifFull: (data & (1 << 6)) != 0,
+                    block: (data & (1 << 5)) != 0
                 ),
                 PioInstructionTypes.PULL => CreatePull(
-                    ifEmpty: (data & (1 << 6)) == (1 << 6),
-                    block: (data & (1 << 5)) == (1 << 5)
+                    ifEmpty: (data & (1 << 6)) != 0,
+                    block: (data & (1 << 5)) != 0
                 ),
                 PioInstructionTypes.MOV => CreateMov(
                     destination: (PioMovDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
                     operation: (PioMovOperations)(data & (1 << 3 | 1 << 4)),
                     source: (PioMovSources)(data & (1 << 0 | 1 << 1 | 1 << 2))
                 ),
-                PioInstructionTypes.IRQ => throw new Exception("IRQ instruction not supported yet"),// TODO
+                PioInstructionTypes.IRQ => CreateIrq(
+                    clear: (data & (1 << 6)) != 0,
+                    wait: (data & (1 << 5)) != 0,
+                    index: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))
+                ),
                 PioInstructionTypes.SET => CreateSet(
                     destination: (PioSetDestinations)(data & (1 << 5 | 1 << 6 | 1 << 7)),
                     data: (byte)(data & (1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4))

@@ -9,13 +9,13 @@ namespace PioSharp
             return instruction.Type switch
             {
                 PioInstructionTypes.JMP => $"jmp {(instruction.JumpConditions != PioJumpConditions.Always ? $"{instruction.JumpConditions.ToPioasmString()} " : "")}{ResolveJumpDestination(instruction.JumpAddress, destinationResolver)}",
-                PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}{(instruction.WaitSource == PioWaitSources.Irq ? $" {ResolveIrqNumberAndRel(instruction.WaitIndex)}" : "")}", // TODO: test properly
+                PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}{(instruction.WaitSource == PioWaitSources.Irq ? $" {ResolveIrqNumberAndRel(instruction.Index)}" : "")}", // TODO: test properly
                 PioInstructionTypes.IN => $"in {instruction.InSource.ToPioasmString()}, {(instruction.BitCount == 0 ? "32" : instruction.BitCount.ToString())}",
                 PioInstructionTypes.OUT => $"out {instruction.OutDestination.ToPioasmString()}, {(instruction.BitCount == 0 ? "32" : instruction.BitCount.ToString())}",
                 PioInstructionTypes.PUSH => $"push {(instruction.PushIfFull ? "iffull " : "")}{(instruction.Block ? "block" : "noblock")}",
                 PioInstructionTypes.PULL => $"pull {(instruction.PullIfEmpty ? "ifempty " : "")}{(instruction.Block ? "block" : "noblock")}",
                 PioInstructionTypes.MOV => $"mov {instruction.MovDestination.ToPioasmString()}, {(instruction.MovOperation != PioMovOperations.None ? $"{instruction.MovOperation.ToPioasmString()} " : "")}{instruction.MovSource.ToPioasmString()}",
-                PioInstructionTypes.IRQ => $"irq (not supported yet!)", // TODO
+                PioInstructionTypes.IRQ => $"irq {(instruction.IrqClear ? "clear" : instruction.IrqWait ? "wait" : "set")} {ResolveIrqNumberAndRel(instruction.Index)}", // TODO: test property
                 PioInstructionTypes.SET => $"set {instruction.SetDestination.ToPioasmString()}, {instruction.SetData}",
                 _ => throw new Exception($"Instruction {instruction.Type} not supported yet"),
             };
@@ -41,11 +41,11 @@ namespace PioSharp
         {
             if ((index >> 4) == 1)
             {
-                return $"{index} rel";
+                return $"{index & (1 << 0 | 1 << 1 | 1 << 2)} rel";
             }
             else
             {
-                return index.ToString();
+                return (index & (1 << 0 | 1 << 1 | 1 << 2)).ToString();
             }
         }
 
