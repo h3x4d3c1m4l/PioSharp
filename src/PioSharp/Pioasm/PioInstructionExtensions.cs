@@ -1,21 +1,21 @@
 ﻿using OneOf;
 
-namespace PioSharp
+namespace PioSharp.Pioasm
 {
-    public static class PioasmStringExtensions
+    public static class PioInstructionExtensions
     {
         public static string ToPioasmString(this PioInstruction instruction, OneOf<string, Func<int, string>>? destinationResolver = null)
         {
             return instruction.Type switch
             {
                 PioInstructionTypes.JMP => $"jmp {(instruction.JumpConditions != PioJumpConditions.Always ? $"{instruction.JumpConditions.ToPioasmString()} " : "")}{ResolveJumpDestination(instruction.JumpAddress, destinationResolver)}",
-                PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}{(instruction.WaitSource == PioWaitSources.Irq ? $" {ResolveIrqNumberAndRel(instruction.Index)}" : "")}", // TODO: test properly
+                PioInstructionTypes.WAIT => $"wait {instruction.WaitPolarity.ToPioasmString()} {instruction.WaitSource.ToPioasmString()}{(instruction.WaitSource == PioWaitSources.Irq ? $" {ResolveIrqNumberAndRel(instruction.Index)}" : "")}",
                 PioInstructionTypes.IN => $"in {instruction.InSource.ToPioasmString()}, {(instruction.BitCount == 0 ? "32" : instruction.BitCount.ToString())}",
                 PioInstructionTypes.OUT => $"out {instruction.OutDestination.ToPioasmString()}, {(instruction.BitCount == 0 ? "32" : instruction.BitCount.ToString())}",
-                PioInstructionTypes.PUSH => $"push {(instruction.PushIfFull ? "iffull " : "")}{(instruction.Block ? "block" : "noblock")}",
-                PioInstructionTypes.PULL => $"pull {(instruction.PullIfEmpty ? "ifempty " : "")}{(instruction.Block ? "block" : "noblock")}",
+                PioInstructionTypes.PUSH => $"push {((instruction.PushOperations & PioPushOperations.IfFull) != 0 ? "iffull " : "")}{((instruction.PushOperations & PioPushOperations.Block) != 0 ? "block" : "noblock")}",
+                PioInstructionTypes.PULL => $"pull {((instruction.PullOperations & PioPullOperations.IfEmpty) != 0 ? "ifempty " : "")}{((instruction.PullOperations & PioPullOperations.Block) != 0 ? "block" : "noblock")}",
                 PioInstructionTypes.MOV => $"mov {instruction.MovDestination.ToPioasmString()}, {(instruction.MovOperation != PioMovOperations.None ? $"{instruction.MovOperation.ToPioasmString()} " : "")}{instruction.MovSource.ToPioasmString()}",
-                PioInstructionTypes.IRQ => $"irq {(instruction.IrqClear ? "clear" : instruction.IrqWait ? "wait" : "set")} {ResolveIrqNumberAndRel(instruction.Index)}", // TODO: test property
+                PioInstructionTypes.IRQ => $"irq {((instruction.IrqOperation & PioIrqOperations.Clear) != 0 ? "clear" : (instruction.IrqOperation & PioIrqOperations.Wait) != 0 ? "wait" : "set")} {ResolveIrqNumberAndRel(instruction.Index)}",
                 PioInstructionTypes.SET => $"set {instruction.SetDestination.ToPioasmString()}, {instruction.SetData}",
                 _ => throw new Exception($"Instruction {instruction.Type} not supported yet"),
             };

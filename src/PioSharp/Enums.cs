@@ -60,6 +60,20 @@
         Exec = 1 << 5 | 1 << 6 | 1 << 7
     }
 
+    [Flags]
+    public enum PioPushOperations
+    {
+        Block = 1 << 5,
+        IfFull = 1 << 6
+    }
+
+    [Flags]
+    public enum PioPullOperations
+    {
+        Block = 1 << 5,
+        IfEmpty = 1 << 6
+    }
+
     public enum PioMovDestinations
     {
         Pins = 0,
@@ -87,6 +101,13 @@
         Status = 1 << 0 | 1 << 2,
         Isr = 1 << 1 | 1 << 2,
         Osr = 1 << 0 | 1 << 1 | 1 << 2
+    }
+
+    [Flags]
+    public enum PioIrqOperations
+    {
+        Wait = 1 << 5,
+        Clear = 1 << 6
     }
 
     public enum PioSetDestinations
